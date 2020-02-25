@@ -16,15 +16,16 @@ import akka.util.Timeout
 import amsterdamscala.domain.Order
 
 import scala.concurrent._
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe.generic.auto._
 
 case class OrderApiController(repo: OrderRepository)(implicit system: ActorSystem, executor: ExecutionContext, materializer: Materializer) {
 
-  import spray.json.DefaultJsonProtocol._
-  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+
   import Order._
 
   val route: Route = concat(
-    pathPrefix("orders") {
+    pathPrefix("order") {
       concat(
         pathEnd {
           get {
@@ -40,16 +41,13 @@ case class OrderApiController(repo: OrderRepository)(implicit system: ActorSyste
             }
           }
         },
-        pathPrefix("users") {
           path(IntNumber) { id =>
             get {
               onSuccess(repo.fetchOrder(id)) { order => order.map(complete(_)).getOrElse(complete(StatusCodes.NotFound))
               }
             }
-          }
         }
       )
-    }
     }
   )
 
