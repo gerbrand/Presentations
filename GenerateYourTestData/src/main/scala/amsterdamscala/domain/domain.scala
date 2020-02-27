@@ -7,7 +7,7 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.generic.auto._
 
 package object domain {
-  case class Email(email: String) extends AnyVal
+  case class Email(value: String) extends AnyVal
 
   case class ForeName(value: String) extends AnyVal
   case class SurName(value: String) extends AnyVal
@@ -15,7 +15,7 @@ package object domain {
     def display() = s"${foreName.value} ${surName.value}"
   }
 
-  case class User(name: Name, email: Email)
+  case class User(id: Int, name: Name, email: Email)
 
   case class Percentage(value: BigDecimal) extends AnyVal
 
@@ -46,7 +46,7 @@ package object domain {
           .emap(email => Right(Email.apply(email)))
 
       implicit val encoder: Encoder[Email] =
-        Encoder.encodeString.contramap(v => v.email)
+        Encoder.encodeString.contramap(v => v.value)
     }
   }
 

@@ -247,6 +247,7 @@ class MyUIDTest extends WordSpecLike with Matchers with ScalaCheckPropertyChecks
 
 --
 * Using map
+
 ```scala
 val posBigDecimal = Gen.choose(0, 100000d).map(BigDecimal(_))
 val zoneGen = Gen.oneOf(ZoneId.getAvailableZoneIds.asScala).map(ZoneId.of(_))
@@ -304,14 +305,7 @@ import org.scalacheck.ScalacheckShapeless._
 
 implicitly[Arbitrary[Name]] //Optional
 ```
---
-Using types only for a property *notice the {*
 
-```scala
-forAll { (n: Name) =>
-  whenever(n.surname.name.length>0) { n.dislayName should contain (s" ${surname.name}") }
-}
-```
 ???
 Uses macro's. Might be a bit to automatic.
 
@@ -325,18 +319,26 @@ case class Order(User: user, amount: Amount, price: Money)
 case class User(Name: name, email: Email)
 ...
 ```
+--
+Using types only to check property *notice the {*
 
-
+```scala
+forAll { (n: Name) =>
+  whenever(n.surname.name.length>0) { n.dislayName should contain (s" ${surname.name}") }
+}
+```
 ???
 This requires you to make your types specific. Helps in property test, but also helps the type checker
 ---
-# Using arbitrary types in generators
+# Using resultOf to use arbitrary values
 
 ```scala
-val User = for {
+  val userGen = for {
+    id <- arbitrary[Int]
     name <- Gen.resultOf(Name)
     email <- emailGen
-} yield (User(name, email))
+  } yield (User(id, name, email))
+
 ```
 ???
 You use arbitrary types in Gen too
@@ -357,6 +359,8 @@ You use arbitrary types in Gen too
 - Property *Does it crash*
 - Use examples and assertions of existing tests
 - Make types specific to allow arbitraty data
+
+https://github.com/gerbrand/Presentations/tree/master/GenerateYourTestData
 
 ???
 More examples:

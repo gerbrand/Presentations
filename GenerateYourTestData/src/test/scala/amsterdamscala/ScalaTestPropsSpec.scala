@@ -2,7 +2,8 @@ package amsterdamscala
 
 import java.time.{ZoneId, ZonedDateTime}
 
-import amsterdamscala.domain.{CountryCode, Currency, Email, Money, Name, Percentage, Price}
+import amsterdamscala.domain.{CountryCode, Currency, Email, Money, Name, Percentage, Price, User}
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -44,8 +45,6 @@ class ScalaTestPropsSpec extends AnyWordSpecLike with Matchers with ScalaCheckDr
   val zoneGen = Gen.oneOf(ZoneId.getAvailableZoneIds.asScala).map(ZoneId.of(_))
   val dateTimeGen   = Gen.calendar.map(c => ZonedDateTime.ofInstant(c.toInstant, ZoneId.systemDefault()))
 
-
-
   val percentage = Gen.choose(0, 1).map(Percentage(_))
   val currencyGen = Gen.oneOf(Seq(Currency.Euro, Currency.Chf))
 
@@ -80,7 +79,7 @@ class ScalaTestPropsSpec extends AnyWordSpecLike with Matchers with ScalaCheckDr
 //  implicitly[Arbitrary[Name]]
 
   "name" should {
-    "should contain surname" in {
+    "contain surname" in {
       forAll { n: Name =>
         whenever(n.surName.value.length > 0) {
           n.display() should include(s" ${n.surName.value}")
@@ -90,6 +89,20 @@ class ScalaTestPropsSpec extends AnyWordSpecLike with Matchers with ScalaCheckDr
           n.display() should be(n.foreName.value)
         }
       }
+    }
+  }
+
+  val userGen = for {
+    id <- arbitrary[Int]
+    name <- Gen.resultOf(Name)
+    email <- emailGen
+  } yield (User(id, name, email))
+
+  "users" should {
+    "be generated" in {
+      forAll(userGen) { user => {
+        user.email.value should not be(empty)
+      }}
     }
   }
 
