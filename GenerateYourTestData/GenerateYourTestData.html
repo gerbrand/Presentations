@@ -176,10 +176,10 @@ class NameSpec extends WordSpecLike with Matchers {
 
     "Name" should {
     "should contain space between first and last name" in {
-    Name(ForeName("Daan"), SurName("Vries")).display() should be ("Daan Vries")
+      Name(ForeName("Daan"), SurName("Vries")).display() should be ("Daan Vries")
     }
     "should be just forename" in {
-    Name(ForeName("Merel")).display() should be ("Merel")
+      Name(ForeName("Merel")).display() should be ("Merel")
     }
 
 }
@@ -218,6 +218,7 @@ class CountrySpec extends AnyWordSpecLike with TableDrivenPropertyChecks {
 
 ```scala
 class MyUIDTest extends WordSpecLike with Matchers with ScalaCheckPropertyChecks {
+  implicit override val generatorDrivenConfig = PropertyCheckConfiguration(minSize = 20)
 
   val counter = Gen.choose(0, Int.MaxValue >> 8)
   val date    = Gen.calendar.map(_.getTime)
@@ -230,7 +231,10 @@ class MyUIDTest extends WordSpecLike with Matchers with ScalaCheckPropertyChecks
         }
      }
    }
-    ```
+}
+```
+???
+The amount of samples that are generated can be tweaked using PropertyCheckConfiguration
 ---
 # More generators
 
@@ -321,7 +325,7 @@ If you omit shapeless:
 Error:(84, 14) could not find implicit value for parameter arbA: org.scalacheck.Arbitrary[amsterdamscala.domain.Name]
       forAll { n: Name =>
 ---
-# Specific types
+# Based on types
 ```scala
 case class Order(User: user, amount: Amount, price: Money)
 case class User(Name: name, email: Email)
@@ -354,12 +358,11 @@ You use arbitrary types in Gen too
 ---
 # Share generators
 - Share generator as library for your domain
+
+--
 - Use existing generators
   - https://github.com/47deg/scalacheck-toolbox
 
---
-- Use existing libraries
-  -
 ---
 # Wrapping up
 
@@ -368,7 +371,11 @@ You use arbitrary types in Gen too
 - Use examples and assertions of existing tests
 - Make types specific to allow arbitraty data
 
-https://github.com/gerbrand/Presentations/tree/master/GenerateYourTestData
+
+--
+[github.com/gerbrand/Presentations/tree/master/GenerateYourTestData](https://github.com/gerbrand/Presentations/tree/master/GenerateYourTestData)
+
+[software-creation.nl](https://www.software-creation.nl)
 
 ???
 More examples:
