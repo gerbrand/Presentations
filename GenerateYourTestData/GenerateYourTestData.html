@@ -1,3 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate your test-data</title>
+    <meta charset="utf-8">
+    <style>
+        @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+        @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+        @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+        body { font-family: 'Droid Serif'; }
+        h1, h2, h3 {
+            font-family: 'Yanone Kaffeesatz';
+            font-weight: normal;
+        }
+        .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+</head>
+<body>
+<textarea id="source" >
+
 class: center, middle
 
 # Generate your test-data
@@ -14,12 +35,17 @@ We'll start with some classical unit tests for a sample application. First, some
 # What is Property based testing
 
 --
+
 * Check properties about your software
   * Creating properties is what you do
 
 --
-* Framework tries to find data that fails your test
-  * You might have to create generators
+  * You also have to write asserts, be creative on properties
+
+--
+
+* Framework tries to find data that fails your properties
+  * You might have to create generators too
 
 ???
 
@@ -33,7 +59,7 @@ References:
 https://hypothesis.works/articles/what-is-property-based-testing/
 ---
 # History
-- 1999: First (popular) implementation: QuickCheck, by by John Hughes and Koen Claessen
+- 1999: QuickCheck, by by John Hughes and Koen Claessen
 
 --
 - 2007: ScalaCheck, by Rickard Nilsson
@@ -133,24 +159,24 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 ---
 # Unit test
-Writing your examples as data
+Simple unit test
 ```scala
 
-case class ForeName(name: String) extends AnyVal  
+case class ForeName(name: String) extends AnyVal
 
 case class SurName(name: String) extends AnyVal
 case class Name(foreName: ForeName, surName: SurName) {
-  def display(): String = ...
-}  
+    def display(): String = ...
+}
 
 class NameSpec extends WordSpecLike with Matchers {
 
-  "Name" should {
-    "should contain space between first and last name" in {    
-       Name(ForeName("Daan"), SurName("Vries")).display() should be ("Daan Vries")
+    "Name" should {
+    "should contain space between first and last name" in {
+    Name(ForeName("Daan"), SurName("Vries")).display() should be ("Daan Vries")
     }
-    "should be just forename" in {    
-       Name(ForeName("Merel")).display() should be ("Merel")
+    "should be just forename" in {
+    Name(ForeName("Merel")).display() should be ("Merel")
     }
 
 }
@@ -159,7 +185,7 @@ class NameSpec extends WordSpecLike with Matchers {
 
 ---
 # Simple test with table data
-Writing your examples as data
+Test with examples
 ```scala
 import org.scalatest.prop.TableDrivenPropertyChecks._
 
@@ -194,16 +220,20 @@ class MyUIDTest extends WordSpecLike with Matchers with ScalaCheckPropertyChecks
   val date    = Gen.calendar.map(_.getTime)
 
   forAll(date, counter) { (d: Date, c: Int) =>
-    {
-    val objectId   = new ObjectId(d, c)
-    val uuid = objectIdToUUID(objectId)
-    uuid.value should be(UUID.fromString(uuid.value.toString))       
-    }
- }
-}
-```
+        {
+          val objectId   = new ObjectId(d, c)
+          val uuid = objectIdToUUID(objectId)
+          uuid.value should be(UUID.fromString(uuid.value.toString))
+        }
+     }
+   }
+    ```
 ---
-# Using for expressions
+# More generators
+
+--
+* Using for expressions
+
 ```scala
   val emailGen = for {
     username <- Gen.asciiPrintableStr
@@ -211,36 +241,36 @@ class MyUIDTest extends WordSpecLike with Matchers with ScalaCheckPropertyChecks
   } yield (Email(s"$username@$server"))
 
 ```
----
-# More generators
 
 --
 * Using map
 ```scala
 val dateTimeGen   = Gen.calendar.map(new DateTime(_))
-
 ```
---
-* Getting some specific value
+
+---
+* Generating a domain class
+
 ```scala
 val posBigDecimal = Gen.choose(0, 100000d).map(BigDecimal(_))
 val percentage = Gen.choose(0, 1)
 val currencyGen = Gen.oneOf(Seq(Currency.Euro, Currency.Chf))
+
 val priceGen = for {
-  withoutTax <- posBigDecimal
-  vatRate    <- percentage
-  withTax = withoutTax * (1 + vatRate)
+    withoutTax <- posBigDecimal
+    vatRate    <- percentage
+    withTax = withoutTax * (1 + vatRate)
 } yield (Price(withoutTax, withTax, vatRate))
 ```
 
-So values can be generated using types
 --
+Using the generator to test a property
 ```scala
-      forAll(priceGen) {
-        case (price: Price) => {
-            whenever(price.vatRate>0) { price.withoutTax should be (price.withTax -  (price.withTax * vatRate)) }
-        }
-      }
+forAll(priceGen) {
+case (price: Price) => {
+        whenever(price.vatRate>0) { price.withoutTax should be (price.withTax -  (price.withTax * vatRate)) }
+    }
+}
 ```
 ---
 
@@ -251,22 +281,50 @@ implicit val arbitraryCurrency      = Arbitrary(currencyGen)
 implicit val arbitraryDateTime      = Arbitrary(dateTimeGen)
 implicit val arbitraryPriceGen      = Arbitrary(priceGen)
 ```
-# Arbitrary data generated using shapeless
+
+--
+Using shapeless for case classes
 ```scala
 import org.scalacheck.ScalacheckShapeless._
 
 implicitly[Arbitrary[Name]]
 ```
-
-Using types can be generated using types
 --
+Using types only for a property (notice the {
+
 ```scala
 forAll { (n: Name) =>
-      whenever(n.surname.name.length>0) { n.dislayName should contain (s" ${surname.name}") }
-    }
+  whenever(n.surname.name.length>0) { n.dislayName should contain (s" ${surname.name}") }
+}
 ```
+---
+You use arbitrary types in Gen too
+```scala
+val User = for {
+    name <- Gen.resultOf(Name)
+    email <- emailGen
+} yield (User(name, email))
+```
+
+---
+# Wrapping up
+
+- Start simple
+- Use generators based on existing examples
+- Fuzzing where applicable
+- Use specific types to allow arbitraty data
 
 ???
 More examples:
 
 [Examples of writing mixed unit/property-based (ScalaTest with ScalaCheck) tests.](https://gist.github.com/davidallsopp/60d7474a1fe8dc9b1f2d)
+
+
+</textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js">
+</script>
+<script>
+    var slideshow = remark.create();
+</script>
+</body>
+</html>
