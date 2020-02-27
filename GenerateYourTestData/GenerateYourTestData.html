@@ -37,6 +37,7 @@ We'll start with some classical unit tests for a sample application. First, some
 --
 
 * Check properties about your software
+
   * Creating properties is what you do
 
 --
@@ -45,8 +46,8 @@ We'll start with some classical unit tests for a sample application. First, some
 --
 
 * Framework tries to find data that fails your properties
-  * You might have to create generators too
-
+  * You might have to create generators yourself
+* *Shrinking* to find smallest counter-example
 ???
 
 What does my software actually do? What is supposed to do?
@@ -99,6 +100,8 @@ https://hypothesis.works/articles/referential-transparency/
   * But it helps
   * But no global side-effects (or rollback after each test)
 
+* For Example, Property based testing is used to test software of Volvo (from John Hughes)
+    being supplied by suppliers
 
 For proving certain properties you could types
 https://en.wikipedia.org/wiki/Refinement_type
@@ -109,7 +112,7 @@ https://www.idris-lang.org/
 # How to get started?
 
 --
-- Property: does my software crash?
+- Most basic Property: does my software crash?
 - Generate for your input
 - Asserts in your code
 
@@ -117,7 +120,7 @@ https://www.idris-lang.org/
 - *Fuzzing*
 
 ???
-How to get started? What is a property we all want our software to hold?
+Audience question? What is most basic property you can think of yourr software?
 
 
 * Very much related to property based testing
@@ -132,10 +135,10 @@ How to get started? What is a property we all want our software to hold?
 - Use existing asserts
 
 ---
-# Slights with codes
-In Scala
+# Slides with codes
+In ![Scala](images/Scala_logo.png "Scala")
 ---
-# Add dependencies
+# Dependencies
 
 Add to build.sbt:
 ```scala
@@ -272,6 +275,11 @@ case (price: Price) => {
     }
 }
 ```
+Tip: use whenever often
+
+???
+Use whenever often, depending on implementation, helps framework on 'shrinking', to find specific data that fails the test
+
 ---
 
 # Arbitrary data for any type
@@ -306,6 +314,15 @@ val User = for {
 } yield (User(name, email))
 ```
 
+---
+# Generator libraries
+- Share generator as library for your domain
+- Use existing generators
+  - https://github.com/47deg/scalacheck-toolbox
+
+--
+- Use existing libraries
+  -
 ---
 # Wrapping up
 
