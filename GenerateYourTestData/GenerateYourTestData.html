@@ -238,10 +238,15 @@ class MyUIDTest extends WordSpecLike with Matchers with ScalaCheckPropertyChecks
 * Using for expressions
 
 ```scala
-  val emailGen = for {
-    username <- Gen.asciiPrintableStr
-    server   <- Gen.asciiPrintableStr
-  } yield (Email(s"$username@$server"))
+val emailGen = for {
+  username <- Gen.asciiPrintableStr
+  server   <- Gen.asciiPrintableStr
+} yield (Email(s"$username@$server"))
+
+val moneyGen = for {
+  amount <- Gen.chooseNum(0, 1000000)
+  currency <- currencyGen
+} yield Money(amount, currency)
 
 ```
 
@@ -292,10 +297,13 @@ Use whenever often, depending on implementation, helps framework on 'shrinking',
 
 # Arbitrary data for any type
 ```scala
-implicit val arbitraryEmail         = Arbitrary(emailGen)
-implicit val arbitraryCurrency      = Arbitrary(currencyGen)
-implicit val arbitraryDateTime      = Arbitrary(dateTimeGen)
-implicit val arbitraryPriceGen      = Arbitrary(priceGen)
+implicit val arbitraryEmail = Arbitrary(emailGen)
+implicit val arbitraryCurrency = Arbitrary(currencyGen)
+implicit val arbitraryDateTime = Arbitrary(dateTimeGen)
+implicit val arbitraryPrice = Arbitrary(priceGen)
+implicit val arbitraryMoney = Arbitrary(moneyGen)
+implicit val arbitraryPercentage = Arbitrary(percentageGen)
+implicit val arbitraryAmount = Arbitrary(amountGen)
 ```
 
 --

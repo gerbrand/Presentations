@@ -52,6 +52,11 @@ package object domain {
 
   case class OrderLine(description: String, good: Good, amount: Amount)
 
+  object OrderLine {
+    def totalAmount(l: OrderLine) = l.amount.value * l.good.price.value
+  }
+
+
   case class Currency(currencyCode: String) extends AnyVal
   case class Money(value: BigDecimal, currency: Currency)
   case class Good(price: Money, article: String, goodType: GoodType)

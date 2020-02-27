@@ -15,3 +15,4 @@ class Orders(repo: OrderRepository) {
     val getOrder = repo.fetchOrder(_)
 
 }
+

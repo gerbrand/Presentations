@@ -2,7 +2,7 @@ package amsterdamscala
 
 import java.time.{ZoneId, ZonedDateTime}
 
-import amsterdamscala.domain.{CountryCode, Currency, Email, Money, Name, Percentage, Price, User}
+import amsterdamscala.domain.{Amount, CountryCode, Currency, Email, Money, Name, Order, Percentage, Price, User}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.funspec.AnyFunSpec
@@ -17,6 +17,8 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
  * Using ScalaCheckDrivenPropertyChecks from Scalaplus
  */
 class ScalaTestPropsSpec extends AnyWordSpecLike with Matchers with ScalaCheckDrivenPropertyChecks with TableDrivenPropertyChecks {
+
+  implicit override val generatorDrivenConfig = PropertyCheckConfiguration(minSize = 20)
 
   "CountryCode" should {
 
@@ -45,13 +47,13 @@ class ScalaTestPropsSpec extends AnyWordSpecLike with Matchers with ScalaCheckDr
   val zoneGen = Gen.oneOf(ZoneId.getAvailableZoneIds.asScala).map(ZoneId.of(_))
   val dateTimeGen   = Gen.calendar.map(c => ZonedDateTime.ofInstant(c.toInstant, ZoneId.systemDefault()))
 
-  val percentage = Gen.choose(0, 1).map(Percentage(_))
+  val percentageGen = Gen.choose(0, 1).map(Percentage(_))
   val currencyGen = Gen.oneOf(Seq(Currency.Euro, Currency.Chf))
 
   val priceGen = for {
     currency <- currencyGen
     withoutTax <- posBigDecimal.map(Money(_, currency))
-    vatRate    <- percentage
+    vatRate    <- percentageGen
     withTax = Money(withoutTax.value * (1 + vatRate.value), withoutTax.currency)
   } yield Price(withoutTax, withTax, vatRate)
 
@@ -69,10 +71,23 @@ class ScalaTestPropsSpec extends AnyWordSpecLike with Matchers with ScalaCheckDr
     }
   }
 
-  implicit val arbitraryEmail         = Arbitrary(emailGen)
-  implicit val arbitraryCurrency      = Arbitrary(currencyGen)
-  implicit val arbitraryDateTime      = Arbitrary(dateTimeGen)
-  implicit val arbitraryPriceGen      = Arbitrary(priceGen)
+  val amountGen = for {
+    n0 <- Gen.posNum[Int]
+    n1 <- Gen.posNum[Int]
+  } yield Amount(BigDecimal(n0, n1))
+
+  val moneyGen = for {
+    amount <- Gen.chooseNum(0, 1000000)
+    currency <- currencyGen
+  } yield Money(amount, currency)
+
+  implicit val arbitraryEmail = Arbitrary(emailGen)
+  implicit val arbitraryCurrency = Arbitrary(currencyGen)
+  implicit val arbitraryDateTime = Arbitrary(dateTimeGen)
+  implicit val arbitraryPrice = Arbitrary(priceGen)
+  implicit val arbitraryMoney = Arbitrary(moneyGen)
+  implicit val arbitraryPercentage = Arbitrary(percentageGen)
+  implicit val arbitraryAmount = Arbitrary(amountGen)
 
   import org.scalacheck.ScalacheckShapeless._
 
@@ -102,6 +117,17 @@ class ScalaTestPropsSpec extends AnyWordSpecLike with Matchers with ScalaCheckDr
     "be generated" in {
       forAll(userGen) { user => {
         user.email.value should not be(empty)
+      }}
+    }
+  }
+
+
+  "orders" should {
+    "have correct amount" in {
+      forAll { orders:List[Order] => {
+        whenever(! orders.isEmpty) {
+          assert(Order.totalAmount(orders) >= 0)
+        }
       }}
     }
   }
