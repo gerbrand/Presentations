@@ -9,6 +9,7 @@ lazy val akkaVersion = "2.6.3"
 val circeVersion = "0.13.0"
 val refinedVersion = "0.9.12"
 
+libraryDependencies += "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.3" % Test
 libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.3" % Test
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.1" % Test
 libraryDependencies += "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % Test

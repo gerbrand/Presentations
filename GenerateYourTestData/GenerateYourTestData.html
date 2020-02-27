@@ -136,7 +136,7 @@ Audience question? What is most basic property you can think of yourr software?
 
 ---
 # Slides with codes
-In ![Scala](images/Scala_logo.png "Scala")
+![Scala](images/Scala_logo.png "Scala")
 ---
 # Dependencies
 
@@ -192,11 +192,11 @@ Test with examples
 ```scala
 import org.scalatest.prop.TableDrivenPropertyChecks._
 
-class CountrySpec extends WordSpecLike with Matchers {
+class CountrySpec extends AnyWordSpecLike with TableDrivenPropertyChecks {
 
   "CountryCode" should {
 
-    "parse from JSON" in {
+    "parse String" in {
       forAll(
         Table(
           ("input", "expected"),
@@ -204,12 +204,12 @@ class CountrySpec extends WordSpecLike with Matchers {
           ("BE", CountryCode.BE),
           ("nl", CountryCode.NL),
         )
-      ) { (input, expected) =>
-        {
-          assert(JsString(input).as[CountryCode] === expected)
-        }
+      ) { (input, expected) => {
+        assert(CountryCode.parse(input) === expected)
+      }
       }
     }
+  }
 }
 
 ```
@@ -248,7 +248,9 @@ class MyUIDTest extends WordSpecLike with Matchers with ScalaCheckPropertyChecks
 --
 * Using map
 ```scala
-val dateTimeGen   = Gen.calendar.map(new DateTime(_))
+val posBigDecimal = Gen.choose(0, 100000d).map(BigDecimal(_))
+val zoneGen = Gen.oneOf(ZoneId.getAvailableZoneIds.asScala).map(ZoneId.of(_))
+val dateTimeGen   = Gen.calendar.map(c => ZonedDateTime.ofInstant(c.toInstant, ZoneId.systemDefault()))
 ```
 
 ---
@@ -256,26 +258,31 @@ val dateTimeGen   = Gen.calendar.map(new DateTime(_))
 
 ```scala
 val posBigDecimal = Gen.choose(0, 100000d).map(BigDecimal(_))
-val percentage = Gen.choose(0, 1)
+val percentage = Gen.choose(0, 1).map(Percentage(_))
 val currencyGen = Gen.oneOf(Seq(Currency.Euro, Currency.Chf))
 
 val priceGen = for {
-    withoutTax <- posBigDecimal
-    vatRate    <- percentage
-    withTax = withoutTax * (1 + vatRate)
-} yield (Price(withoutTax, withTax, vatRate))
+  currency <- currencyGen
+  withoutTax <- posBigDecimal.map(Money(_, currency))
+  vatRate    <- percentage
+  withTax = Money(withoutTax.value * (1 + vatRate.value), withoutTax.currency)
+} yield Price(withoutTax, withTax, vatRate)
 ```
 
 --
 Using the generator to test a property
 ```scala
 forAll(priceGen) {
-case (price: Price) => {
-        whenever(price.vatRate>0) { price.withoutTax should be (price.withTax -  (price.withTax * vatRate)) }
+    case price: Price => {
+     whenever(price.vatRate.value>0) {
+        assert(price.withoutTax.value < price.withTax.value)
+        price.withoutTax should be (price.withTax.value -  (price.withTax.value * price.vatRate.value))
+      }
     }
 }
+
 ```
-Tip: use whenever often
+Tip: use whenever
 
 ???
 Use whenever often, depending on implementation, helps framework on 'shrinking', to find specific data that fails the test
@@ -295,27 +302,47 @@ Using shapeless for case classes
 ```scala
 import org.scalacheck.ScalacheckShapeless._
 
-implicitly[Arbitrary[Name]]
+implicitly[Arbitrary[Name]] //Optional
 ```
 --
-Using types only for a property (notice the {
+Using types only for a property *notice the {*
 
 ```scala
 forAll { (n: Name) =>
   whenever(n.surname.name.length>0) { n.dislayName should contain (s" ${surname.name}") }
 }
 ```
+???
+Uses macro's. Might be a bit to automatic.
+
+If you omit shapeless:
+Error:(84, 14) could not find implicit value for parameter arbA: org.scalacheck.Arbitrary[amsterdamscala.domain.Name]
+      forAll { n: Name =>
 ---
-You use arbitrary types in Gen too
+# Specific types
+```scala
+case class Order(User: user, amount: Amount, price: Money)
+case class User(Name: name, email: Email)
+...
+```
+
+
+???
+This requires you to make your types specific. Helps in property test, but also helps the type checker
+---
+# Using arbitrary types in generators
+
 ```scala
 val User = for {
     name <- Gen.resultOf(Name)
     email <- emailGen
 } yield (User(name, email))
 ```
+???
+You use arbitrary types in Gen too
 
 ---
-# Generator libraries
+# Share generators
 - Share generator as library for your domain
 - Use existing generators
   - https://github.com/47deg/scalacheck-toolbox
@@ -327,9 +354,9 @@ val User = for {
 # Wrapping up
 
 - Start simple
-- Use generators based on existing examples
-- Fuzzing where applicable
-- Use specific types to allow arbitraty data
+- Property *Does it crash*
+- Use examples and assertions of existing tests
+- Make types specific to allow arbitraty data
 
 ???
 More examples:
