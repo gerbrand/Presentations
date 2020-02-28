@@ -2,15 +2,11 @@
 
 Presentation created using [RemarkJS](https://github.com/gnab/remark)
 
+To view the presentation, open [GenerateYourTestData.html](GenerateYourTestData.html) in any browser.
+
+The file [ScalaTestPropsSpec.scala](src/test/scala/amsterdamscala/ScalaTestPropsSpec.scala) contains code that is shown in the presentation.
+Furthermore src/main/scala contains besides some domain code also a sample rest-api, which is not yet under-test.
+
+
 Explanation on using presentation mode/dual mode:
 https://github.com/gnab/remark/wiki/Presentation-mode
-
-Copied from the Wiki:
-```markdown
-Presentation mode can be activated/deactivated by pressing the P key on your keyboard while having the window focused.
-
-You will be presented with your current slide, a preview of the next slide, your current and next slide notes as well as a timer.
-
-Additionally you can press C to create a new window where the same presentation will be displayed. This window is linked to the main window. Changing slides on one will cause the slide to change on the other.
-
-```

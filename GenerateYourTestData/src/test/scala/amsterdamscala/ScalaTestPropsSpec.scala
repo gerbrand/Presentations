@@ -2,22 +2,23 @@ package amsterdamscala
 
 import java.time.{ZoneId, ZonedDateTime}
 
-import amsterdamscala.domain.{Amount, CountryCode, Currency, Email, Money, Name, Order, Percentage, Price, User}
+import amsterdamscala.domain._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-// Inspiration ? https://github.com/circe/circe/blob/1776c0d2d2822bfa282cc674fd7a7c4b8f4cdeda/modules/literal/src/test/scala/io/circe/literal/interpolator/JsonInterpolatorSuite.scala
-
 /**
  * Using ScalaCheckDrivenPropertyChecks from Scalaplus
+ *
+ * Some of the test fails. Up to the reader to fix them.
  */
 class ScalaTestPropsSpec extends AnyWordSpecLike with Matchers with ScalaCheckDrivenPropertyChecks with TableDrivenPropertyChecks {
 
+  // Change minSize set to a high number (like 100000) and run the test again.
+  // Some tests will run longer. Failing test will fail just as fast.
   implicit override val generatorDrivenConfig = PropertyCheckConfiguration(minSize = 20)
 
   "CountryCode" should {
